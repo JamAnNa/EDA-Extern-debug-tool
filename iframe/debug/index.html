@@ -51,6 +51,7 @@
 			.sidebar h2 {
 				font-size: 1.2em;
 				margin-bottom: 15px;
+				margin-top: -5px;
 				color: #00cc99;
 				transition: color 0.3s;
 			}
@@ -192,13 +193,25 @@
 			}
 
 			.modal-content {
+				position: fixed;
+				/* 固定在视口中 */
+				top: 50%;
+				/* 垂直方向居中 */
+				left: 50%;
+				/* 水平方向居中 */
+				transform: translate(-50%, -50%);
+				/* 调整偏移 */
 				background-color: #2d2d2d;
-				margin: 15% auto;
 				padding: 20px;
 				border-radius: 10px;
-				width: 300px;
+				width: 90%;
+				/* 最大宽度为屏幕的 90% */
+				max-width: 400px;
+				/* 设置最大宽度 */
 				max-height: 80vh;
+				/* 最大高度为视口高度的 80% */
 				overflow-y: auto;
+				/* 允许内容滚动 */
 				box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 				transition: background-color 0.3s, color 0.3s;
 			}
@@ -207,6 +220,53 @@
 				background-color: #ffffff;
 				color: #000;
 			}
+
+
+			/* 搜索框样式 */
+			#searchInput {
+				position: sticky;
+				/* 固定在顶部 */
+				top: 0;
+				/* 距离顶部 0 */
+				z-index: 1;
+				/* 确保覆盖其他内容 */
+				width: 100%;
+				padding: 10px;
+				margin-bottom: 10px;
+				border: none;
+				border-radius: 5px;
+				background-color: #333;
+				color: #fff;
+				transition: background-color 0.3s, color 0.3s;
+				box-sizing: border-box;
+			}
+
+			/* 隐藏搜索框 */
+			#searchInput.hidden {
+				display: none;
+			}
+
+
+			.light-mode #searchInput {
+				background-color: #fafafa;
+				color: #000;
+			}
+
+			/* 弹窗内容区域样式 */
+			.modal-body {
+				max-height: calc(80vh - 150px);
+				/* 减去头部、搜索框和底部按钮的高度 */
+				overflow-y: auto;
+				scrollbar-width: none;
+				/* 隐藏滚动条（适用于 Firefox） */
+			}
+
+			.modal-body::-webkit-scrollbar {
+				display: none;
+				/* 隐藏滚动条（适用于 WebKit 浏览器，如 Chrome 和 Edge） */
+			}
+
+
 
 			.modal-header {
 				font-size: 1.2em;
@@ -232,6 +292,15 @@
 				display: flex;
 				justify-content: space-between;
 				align-items: center;
+				overflow-y: auto;
+				/* 允许垂直滚动 */
+				scrollbar-width: none;
+				/* 隐藏滚动条（适用于 Firefox） */
+			}
+
+			.modal-body::-webkit-scrollbar {
+				display: none;
+				/* 隐藏滚动条（适用于 WebKit 浏览器，如 Chrome 和 Edge） */
 			}
 
 			.modal-body div:hover {
@@ -319,6 +388,7 @@
 				<button id="toggleTheme">切换主题</button>
 				<button id="saveCode">保存代码</button>
 				<button id="loadCode">加载代码</button>
+				<button id="loadCodeForServer">从云端加载</button>
 				<button id="deleteCode">删除代码</button>
 				<button id="setStartup">设置启动项</button>
 				<button id="importCode">导入代码</button>
@@ -334,6 +404,8 @@
 		<div id="modal" class="modal">
 			<div class="modal-content">
 				<div class="modal-header" id="modalHeader">选择代码</div>
+				<!-- 新增搜索框 -->
+				<input type="text" id="searchInput" class="modal-input" placeholder="搜索..." />
 				<div class="modal-body" id="modalBody"></div>
 				<input type="text" id="modalInput" class="modal-input" placeholder="输入代码名称" style="display: none;" />
 				<div style="display: flex; justify-content: space-between;">
@@ -342,6 +414,7 @@
 				</div>
 			</div>
 		</div>
+
 
 		<!-- 提示消息 -->
 		<div id="toast" class="toast"></div>
@@ -353,7 +426,141 @@
 
 		<script>
 			let isLightMode = false;
-			let currentEditingName = null; // 当前正在编辑的代码名称（用于保存时默认填充）
+			let currentEditingName = null; // 当前正在编辑的代码名称
+			let db;
+
+			// 初始化 IndexedDB 数据库
+			function initDB() {
+				return new Promise((resolve, reject) => {
+					const request = indexedDB.open('JavaScriptEditorDB', 1);
+
+					request.onerror = (event) => {
+						console.error('IndexedDB 初始化失败:', event);
+						reject('数据库初始化失败');
+					};
+
+					request.onsuccess = (event) => {
+						db = event.target.result;
+						resolve(db);
+					};
+
+					request.onupgradeneeded = (event) => {
+						db = event.target.result;
+						if (!db.objectStoreNames.contains('CodeStore')) {
+							db.createObjectStore('CodeStore', { keyPath: 'name' });
+						}
+					};
+				});
+			}
+
+			// 保存代码到 IndexedDB
+			async function saveCodeToDB(name, code) {
+				try {
+					const transaction = db.transaction(['CodeStore'], 'readwrite');
+					const store = transaction.objectStore('CodeStore');
+					await new Promise((resolve, reject) => {
+						const request = store.put({ name, code });
+						request.onsuccess = resolve;
+						request.onerror = reject;
+					});
+					showToast(`✅ 代码已保存为：${name}`);
+				} catch (error) {
+					console.error('保存代码失败:', error);
+					showToast('❌ 保存代码失败');
+				}
+			}
+
+			// 从 IndexedDB 加载代码
+			async function loadCodeFromDB(name) {
+				try {
+					const transaction = db.transaction(['CodeStore'], 'readonly');
+					const store = transaction.objectStore('CodeStore');
+					const result = await new Promise((resolve, reject) => {
+						const request = store.get(name);
+						request.onsuccess = () => resolve(request.result?.code || null);
+						request.onerror = reject;
+					});
+					return result;
+				} catch (error) {
+					console.error('加载代码失败:', error);
+					showToast('❌ 加载代码失败');
+					return null;
+				}
+			}
+
+			// 从 IndexedDB 删除代码
+			async function deleteCodeFromDB(name) {
+				try {
+					const transaction = db.transaction(['CodeStore'], 'readwrite');
+					const store = transaction.objectStore('CodeStore');
+					await new Promise((resolve, reject) => {
+						const request = store.delete(name);
+						request.onsuccess = resolve;
+						request.onerror = reject;
+					});
+					showToast('代码已删除！');
+				} catch (error) {
+					console.error('删除代码失败:', error);
+					showToast('❌ 删除代码失败');
+				}
+			}
+
+			// 获取所有代码名称
+			async function getAllCodeNamesFromDB() {
+				try {
+					const transaction = db.transaction(['CodeStore'], 'readonly');
+					const store = transaction.objectStore('CodeStore');
+					const result = await new Promise((resolve, reject) => {
+						const request = store.getAllKeys();
+						request.onsuccess = () => resolve(request.result);
+						request.onerror = reject;
+					});
+
+					// 过滤掉 '__startup__' 键
+					return result.filter(name => name !== '__startup__');
+				} catch (error) {
+					console.error('获取代码名称失败:', error);
+					showToast('❌ 获取代码名称失败');
+					return [];
+				}
+			}
+
+
+			// 设置启动项
+			async function setStartupCodesToDB(startupCodes) {
+				try {
+					const transaction = db.transaction(['CodeStore'], 'readwrite');
+					const store = transaction.objectStore('CodeStore');
+					await new Promise((resolve, reject) => {
+						const request = store.put({ name: '__startup__', code: JSON.stringify(startupCodes) });
+						request.onsuccess = resolve;
+						request.onerror = reject;
+					});
+					showToast(`${startupCodes.length} 个代码已设为启动项！`);
+				} catch (error) {
+					console.error('设置启动项失败:', error);
+					showToast('❌ 设置启动项失败');
+				}
+			}
+
+			// 获取启动项
+			async function getStartupCodesFromDB() {
+				try {
+					const transaction = db.transaction(['CodeStore'], 'readonly');
+					const store = transaction.objectStore('CodeStore');
+					const result = await new Promise((resolve, reject) => {
+						const request = store.get('__startup__');
+						request.onsuccess = () => resolve(JSON.parse(request.result?.code || '[]'));
+						request.onerror = reject;
+					});
+					return result;
+				} catch (error) {
+					console.error('获取启动项失败:', error);
+					showToast('❌ 获取启动项失败');
+					return [];
+				}
+			}
+
 
 			// Tab 键缩进 + 快捷键支持
 			document.getElementById('codeInput').addEventListener('keydown', function(e) {
@@ -395,10 +602,16 @@
 			function formatCode() {
 				const code = document.getElementById('codeInput').value;
 				try {
-					const formatted = prettier.format(code, { parser: 'babel', plugins: [prettierPlugins.babel] });
+					// 使用 prettier 格式化代码，并禁用自动换行
+					const formatted = prettier.format(code, {
+						parser: 'babel',
+						plugins: [prettierPlugins.babel],
+						printWidth: Infinity, // 禁用自动换行
+					});
 					document.getElementById('codeInput').value = formatted;
 				} catch (error) {
 					console.error('格式化失败：' + error.message);
+					showToast('❌ 格式化代码失败');
 				}
 			}
 
@@ -422,11 +635,19 @@
 				const modalInput = document.getElementById('modalInput');
 				const modalConfirm = document.getElementById('modalConfirm');
 				const modalCancel = document.getElementById('modalCancel');
+				const searchInput = document.getElementById('searchInput');
 
 				modalHeader.textContent = headerText;
 				modalBody.innerHTML = '';
 				modalInput.style.display = mode === 'save' ? 'block' : 'none';
-				modalInput.value = defaultValue || ''; // 填入默认值（如当前编辑名称）
+				modalInput.value = defaultValue || '';
+
+				if (mode === 'save') {
+					searchInput.classList.add('hidden');
+				} else {
+					searchInput.classList.remove('hidden');
+					searchInput.value = '';
+				}
 
 				if (mode === 'load' || mode === 'delete') {
 					bodyContent.forEach((item) => {
@@ -441,42 +662,44 @@
 						modalBody.appendChild(div);
 					});
 				} else if (mode === 'startup') {
-					const currentStartupList = JSON.parse(localStorage.getItem('startupCodes') || '[]');
-					currentStartupList.forEach(item => selectedItems.add(item));
+					// 从 IndexedDB 获取启动项数据
+					getStartupCodesFromDB().then(currentStartupList => {
+						currentStartupList.forEach(item => selectedItems.add(item));
 
-					bodyContent.forEach((item) => {
-						const div = document.createElement('div');
-						const nameSpan = document.createElement('span');
-						nameSpan.textContent = item;
+						bodyContent.forEach((item) => {
+							const div = document.createElement('div');
+							const nameSpan = document.createElement('span');
+							nameSpan.textContent = item;
 
-						const checkbox = document.createElement('input');
-						checkbox.type = 'checkbox';
-						checkbox.className = 'startup-checkbox';
-						checkbox.checked = selectedItems.has(item);
+							const checkbox = document.createElement('input');
+							checkbox.type = 'checkbox';
+							checkbox.className = 'startup-checkbox';
+							checkbox.checked = selectedItems.has(item);
 
-						checkbox.addEventListener('change', () => {
-							if (checkbox.checked) {
-								selectedItems.add(item);
-							} else {
-								selectedItems.delete(item);
-							}
-						});
-
-						div.appendChild(nameSpan);
-						div.appendChild(checkbox);
-
-						div.addEventListener('click', (e) => {
-							if (e.target !== checkbox) {
-								checkbox.checked = !checkbox.checked;
+							checkbox.addEventListener('change', () => {
 								if (checkbox.checked) {
 									selectedItems.add(item);
 								} else {
 									selectedItems.delete(item);
 								}
-							}
-						});
+							});
 
-						modalBody.appendChild(div);
+							div.appendChild(nameSpan);
+							div.appendChild(checkbox);
+
+							div.addEventListener('click', (e) => {
+								if (e.target !== checkbox) {
+									checkbox.checked = !checkbox.checked;
+									if (checkbox.checked) {
+										selectedItems.add(item);
+									} else {
+										selectedItems.delete(item);
+									}
+								}
+							});
+
+							modalBody.appendChild(div);
+						});
 					});
 				}
 
@@ -499,82 +722,77 @@
 				modal.style.display = 'block';
 			}
 
+
 			// 隐藏弹窗
 			function hideModal() {
 				document.getElementById('modal').style.display = 'none';
+				document.getElementById('searchInput').value = '';
 			}
 
-			// 显示保存弹窗（支持默认填充名称）
-			function showSaveModal() {
-				showModal('save', '保存代码', [], (name) => {
+			// 显示保存弹窗
+			async function showSaveModal() {
+				const savedCodes = await getAllCodeNamesFromDB();
+				showModal('save', '保存代码', savedCodes, async (name) => {
 					const code = document.getElementById('codeInput').value;
 					if (!code.trim()) {
 						return showToast('无法保存空代码！');
 					}
-					const savedCodes = JSON.parse(localStorage.getItem('savedCodes') || '{}');
-					savedCodes[name] = code;
-					localStorage.setItem('savedCodes', JSON.stringify(savedCodes));
-					currentEditingName = name; // 更新当前编辑名称
-					showToast('✅ 代码已保存为：' + name);
-				}, currentEditingName); // ← 自动填充当前正在编辑的名称
+					await saveCodeToDB(name, code);
+				}, currentEditingName);
 			}
 
 			// 绑定保存按钮
 			document.getElementById('saveCode').addEventListener('click', showSaveModal);
 
 			// 加载代码
-			document.getElementById('loadCode').addEventListener('click', () => {
-				const savedCodes = JSON.parse(localStorage.getItem('savedCodes') || '{}');
-				const names = Object.keys(savedCodes);
-				if (names.length === 0) {
+			document.getElementById('loadCode').addEventListener('click', async () => {
+				const savedCodes = await getAllCodeNamesFromDB();
+				if (savedCodes.length === 0) {
 					showToast('没有保存的代码！');
 					return;
 				}
-				showModal('load', '加载代码', names, (name) => {
-					if (name && savedCodes[name]) {
-						document.getElementById('codeInput').value = savedCodes[name];
-						currentEditingName = name; // 设置当前编辑的代码名
+				showModal('load', '加载代码', savedCodes, async (name) => {
+					const code = await loadCodeFromDB(name);
+					if (code) {
+						document.getElementById('codeInput').value = code;
+						currentEditingName = name;
 						showToast('代码已加载！');
 					}
 				});
 			});
 
 			// 删除代码
-			document.getElementById('deleteCode').addEventListener('click', () => {
-				const savedCodes = JSON.parse(localStorage.getItem('savedCodes') || '{}');
-				const names = Object.keys(savedCodes);
-				if (names.length === 0) {
+			document.getElementById('deleteCode').addEventListener('click', async () => {
+				const savedCodes = await getAllCodeNamesFromDB();
+				if (savedCodes.length === 0) {
 					showToast('没有保存的代码！');
 					return;
 				}
-				showModal('delete', '删除代码', names, (name) => {
-					delete savedCodes[name];
-					localStorage.setItem('savedCodes', JSON.stringify(savedCodes));
+				showModal('delete', '删除代码', savedCodes, async (name) => {
+					await deleteCodeFromDB(name);
 					if (currentEditingName === name) {
-						currentEditingName = null; // 清除当前编辑名
+						currentEditingName = null;
 					}
 					showToast('代码已删除！');
 				});
 			});
 
-			// 设置启动项（多选）
-			document.getElementById('setStartup').addEventListener('click', () => {
-				const savedCodes = JSON.parse(localStorage.getItem('savedCodes') || '{}');
-				const names = Object.keys(savedCodes);
-				if (names.length === 0) {
+			// 设置启动项
+			document.getElementById('setStartup').addEventListener('click', async () => {
+				const savedCodes = await getAllCodeNamesFromDB();
+				if (savedCodes.length === 0) {
 					showToast('没有保存的代码！');
 					return;
 				}
-				showModal('startup', '设置启动项（可多选）', names, (selectedNames) => {
-					localStorage.setItem('startupCodes', JSON.stringify(selectedNames));
-					if (selectedNames.length > 0) {
-						showToast(`${selectedNames.length} 个代码已设为启动项！`);
-					} else {
-						showToast('启动项已清空！');
-					}
+				showModal('startup', '设置启动项（可多选）', savedCodes, async (selectedNames) => {
+					await setStartupCodesToDB(selectedNames);
 				});
 			});
-
+			
+			document.getElementById('loadCodeForServer').addEventListener('click',async () =>{
+				await eda.sys_Message.showToastMessage("这个功能还没做",1);
+			})
+		   
 			// 导入代码
 			document.getElementById('importCode').addEventListener('click', () => {
 				const input = document.createElement('input');
@@ -589,39 +807,36 @@
 					try {
 						if (file.name.endsWith('.js')) {
 							const reader = new FileReader();
-							reader.onload = () => {
+							reader.onload = async () => {
 								const code = reader.result;
-								let name = file.name.slice(0, -3); // 去掉 .js
-								// 如果存在同名文件，提示是否覆盖？
-								const savedCodes = JSON.parse(localStorage.getItem('savedCodes') || '{}');
-								if (savedCodes[name]) {
+								let name = file.name.slice(0, -3);
+								const savedCodes = await getAllCodeNamesFromDB();
+								if (savedCodes.includes(name)) {
 									if (!confirm(`文件 "${name}" 已存在，是否覆盖？`)) {
 										name = prompt('请输入新名称：', name) || name + '_copy';
 									}
 								}
-								savedCodes[name] = code;
-								localStorage.setItem('savedCodes', JSON.stringify(savedCodes));
+								await saveCodeToDB(name, code);
 								showToast(`✅ 已导入：${name}`);
 							};
 							reader.readAsText(file);
 						} else if (file.name.endsWith('.zip')) {
 							const zip = new JSZip();
 							const content = await zip.loadAsync(file);
-							const savedCodes = JSON.parse(localStorage.getItem('savedCodes') || '{}');
 							let importedCount = 0;
 
 							for (const [filename, zipEntry] of Object.entries(content.files)) {
 								if (filename.endsWith('/') || !filename.endsWith('.js')) continue;
 								let name = filename.slice(0, -3);
-								if (savedCodes[name]) {
+								const savedCodes = await getAllCodeNamesFromDB();
+								if (savedCodes.includes(name)) {
 									if (!confirm(`文件 "${name}" 已存在，是否覆盖？`)) continue;
 								}
 								const code = await zipEntry.async('string');
-								savedCodes[name] = code;
+								await saveCodeToDB(name, code);
 								importedCount++;
 							}
 
-							localStorage.setItem('savedCodes', JSON.stringify(savedCodes));
 							showToast(`✅ 已导入 ${importedCount} 个 .js 文件！`);
 						} else {
 							showToast('❌ 不支持的文件类型！');
@@ -637,17 +852,22 @@
 
 			// 导出代码
 			document.getElementById('exportCode').addEventListener('click', async () => {
-				const savedCodes = JSON.parse(localStorage.getItem('savedCodes') || '{}');
-				const names = Object.keys(savedCodes);
+				const savedCodes = {};
+				const names = await getAllCodeNamesFromDB();
 				if (names.length === 0) {
 					showToast('没有可导出的代码！');
 					return;
 				}
 
+				for (const name of names) {
+					const code = await loadCodeFromDB(name);
+					if (code) savedCodes[name] = code;
+				}
+
 				const zip = new JSZip();
-				names.forEach(name => {
-					zip.file(`${name}.js`, savedCodes[name]);
-				});
+				for (const [name, code] of Object.entries(savedCodes)) {
+					zip.file(`${name}.js`, code);
+				}
 
 				try {
 					const blob = await zip.generateAsync({ type: 'blob' });
@@ -655,7 +875,7 @@
 					link.href = URL.createObjectURL(blob);
 					link.download = 'javascript-editor-backup.zip';
 					link.click();
-					showToast(`✅ 已导出 ${names.length} 个代码文件！`);
+					showToast(`✅ 已导出 ${Object.keys(savedCodes).length} 个代码文件！`);
 				} catch (err) {
 					showToast('❌ 导出失败：' + err.message);
 				}
@@ -679,27 +899,46 @@
 				}
 			});
 
-			// 自动聚焦并执行启动项
-			window.onload = () => {
-				const codeInput = document.getElementById('codeInput');
-				codeInput.focus();
+			// 页面加载时初始化数据库并执行启动项
+			window.onload = async () => {
+				try {
+					await initDB();
 
-				// 执行启动项（静默）
-				const startupList = JSON.parse(localStorage.getItem('startupCodes') || '[]');
-				if (startupList.length > 0) {
-					const savedCodes = JSON.parse(localStorage.getItem('savedCodes') || '{}');
-					startupList.forEach(name => {
-						const code = savedCodes[name];
-						if (code) {
-							try {
-								eval(code);
-							} catch (error) {
-								console.error(`❌ 启动项执行失败 [${name}]：`, error.message);
+					const codeInput = document.getElementById('codeInput');
+					codeInput.focus();
+
+					const startupList = await getStartupCodesFromDB();
+					if (startupList.length > 0) {
+						for (const name of startupList) {
+							const code = await loadCodeFromDB(name);
+							if (code) {
+								try {
+									eval(code);
+								} catch (error) {
+									console.error(`❌ 启动项执行失败 [${name}]：`, error.message);
+								}
 							}
 						}
-					});
+					}
+				} catch (error) {
+					console.error('页面加载失败:', error);
 				}
 			};
+
+			// 搜索功能
+			document.getElementById('searchInput').addEventListener('input', function() {
+				const searchTerm = this.value.trim().toLowerCase();
+				const items = document.querySelectorAll('#modalBody > div');
+
+				items.forEach(item => {
+					const text = item.textContent.toLowerCase();
+					if (text.includes(searchTerm)) {
+						item.style.display = 'flex';
+					} else {
+						item.style.display = 'none';
+					}
+				});
+			});
 		</script>
 	</body>
 </html>
