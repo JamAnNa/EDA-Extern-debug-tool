@@ -2,7 +2,7 @@
 
 # debug-for-sdk
 
-<image src="images/Title.png" alt="logo" width="300" height="100"><image src="images/Title.png" alt="logo" width="300" height="100"><image src="images/Title.png" alt="logo" width="300" height="100">
+<image src="images/Title.png" alt="logo" width="300" height="100"> <image src="images/Title.png" alt="logo" width="300" height="100">
 
 <p><p/>
 基于嘉立创EDA专业版开发工具构建的新版EDA调试专用开发工具
