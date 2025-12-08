@@ -14,63 +14,69 @@
 		"url": ""
 	},
 	"categories": "Other",
-	"keywords": [
-		"SDK",
-		"DEBUG"
-	],
+	"keywords": ["SDK", "DEBUG"],
 	"images": {
 		"logo": "./images/logo.png"
 	},
-	"homepage": "https://pro.lceda.cn",
-	"bugs": "https://lceda.cn/page/feedback?originPage=other",
+	"homepage": "https://github.com/JamAnNa/EDA-Extern-debug-tool",
+	"bugs": "https://github.com/JamAnNa/EDA-Extern-debug-tool",
 	"activationEvents": {},
 	"entry": "./dist/index",
 	"dependentExtensions": {},
 	"headerMenus": {
-		"home": [{
-			"id": "API SDK",
-			"title": "API SDK",
-			"menuItems": [{
-					"id": "Debug",
-					"title": "调试...",
-					"registerFn": "debug"
-				},
-				{
-					"id": "About",
-					"title": "About...",
-					"registerFn": "about"
-				}
-			]
-		}],
-		"sch": [{
-			"id": "API SDK",
-			"title": "API SDK",
-			"menuItems": [{
-					"id": "Debug",
-					"title": "调试...",
-					"registerFn": "debug"
-				},
-				{
-					"id": "About",
-					"title": "About...",
-					"registerFn": "about"
-				}
-			]
-		}],
-		"pcb": [{
-			"id": "API SDK",
-			"title": "API SDK",
-			"menuItems": [{
-					"id": "Debug",
-					"title": "调试...",
-					"registerFn": "debug"
-				},
-				{
-					"id": "About",
-					"title": "About...",
-					"registerFn": "about"
-				}
-			]
-		}]
+		"home": [
+			{
+				"id": "API SDK",
+				"title": "API SDK",
+				"menuItems": [
+					{
+						"id": "Debug",
+						"title": "调试...",
+						"registerFn": "debug"
+					},
+					{
+						"id": "About",
+						"title": "About...",
+						"registerFn": "about"
+					}
+				]
+			}
+		],
+		"sch": [
+			{
+				"id": "API SDK",
+				"title": "API SDK",
+				"menuItems": [
+					{
+						"id": "Debug",
+						"title": "调试...",
+						"registerFn": "debug"
+					},
+					{
+						"id": "About",
+						"title": "About...",
+						"registerFn": "about"
+					}
+				]
+			}
+		],
+		"pcb": [
+			{
+				"id": "API SDK",
+				"title": "API SDK",
+				"menuItems": [
+					{
+						"id": "Debug",
+						"title": "调试...",
+						"registerFn": "debug"
+					},
+					{
+						"id": "About",
+						"title": "About...",
+						"registerFn": "about"
+					}
+				]
+			}
+		]
 	}
 }
