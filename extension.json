@@ -1,0 +1,76 @@
+{
+	"name": "pro-debug-sdk",
+	"uuid": "bf5e3141e76c4e289bfe56540513a5fa",
+	"displayName": "DEBUG FOR SDK",
+	"description": "基于嘉立创PRO API SDK的定制SDK，增加了内置debug能力",
+	"version": "1.12.1",
+	"publisher": "anan",
+	"engines": {
+		"eda": "^3.2.41"
+	},
+	"license": "Apache-2.0",
+	"repository": {
+		"type": "extension-store",
+		"url": ""
+	},
+	"categories": "Other",
+	"keywords": [
+		"SDK",
+		"DEBUG"
+	],
+	"images": {
+		"logo": "./images/logo.png"
+	},
+	"homepage": "https://pro.lceda.cn",
+	"bugs": "https://lceda.cn/page/feedback?originPage=other",
+	"activationEvents": {},
+	"entry": "./dist/index",
+	"dependentExtensions": {},
+	"headerMenus": {
+		"home": [{
+			"id": "API SDK",
+			"title": "API SDK",
+			"menuItems": [{
+					"id": "Debug",
+					"title": "调试...",
+					"registerFn": "debug"
+				},
+				{
+					"id": "About",
+					"title": "About...",
+					"registerFn": "about"
+				}
+			]
+		}],
+		"sch": [{
+			"id": "API SDK",
+			"title": "API SDK",
+			"menuItems": [{
+					"id": "Debug",
+					"title": "调试...",
+					"registerFn": "debug"
+				},
+				{
+					"id": "About",
+					"title": "About...",
+					"registerFn": "about"
+				}
+			]
+		}],
+		"pcb": [{
+			"id": "API SDK",
+			"title": "API SDK",
+			"menuItems": [{
+					"id": "Debug",
+					"title": "调试...",
+					"registerFn": "debug"
+				},
+				{
+					"id": "About",
+					"title": "About...",
+					"registerFn": "about"
+				}
+			]
+		}]
+	}
+}

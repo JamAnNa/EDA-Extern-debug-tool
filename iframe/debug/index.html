@@ -1,0 +1,705 @@
+<!doctype html>
+<html lang="zh">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>JavaScript 编辑器</title>
+		<style>
+			body {
+				font-family: 'Courier New', monospace;
+				margin: 0;
+				padding: 0;
+				background-color: #1e1e1e;
+				color: #ffffff;
+				min-height: 100vh;
+				display: flex;
+				flex-direction: column;
+				transition: background-color 0.3s, color 0.3s;
+			}
+
+			.light-mode {
+				background-color: #f0f0f0;
+				color: #000;
+			}
+
+			.container {
+				display: flex;
+				flex-grow: 1;
+				height: 100vh;
+				overflow: hidden;
+			}
+
+			.sidebar {
+				width: auto;
+				min-width: 150px;
+				background-color: #2d2d2d;
+				box-shadow: 4px 0 6px rgba(0, 0, 0, 0.2);
+				padding: 20px;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				border-right: 1px solid #333;
+				transition: background-color 0.3s, color 0.3s;
+			}
+
+			.light-mode .sidebar {
+				background-color: #e0e0e0;
+				box-shadow: 4px 0 6px rgba(0, 0, 0, 0.1);
+				color: #000;
+			}
+
+			.sidebar h2 {
+				font-size: 1.2em;
+				margin-bottom: 15px;
+				color: #00cc99;
+				transition: color 0.3s;
+			}
+
+			.light-mode .sidebar h2 {
+				color: #000;
+			}
+
+			.sidebar button {
+				width: 100%;
+				background-color: #333;
+				color: #fff;
+				border: none;
+				padding: 10px 15px;
+				margin-bottom: 10px;
+				border-radius: 5px;
+				cursor: pointer;
+				transition: background-color 0.3s, color 0.3s;
+			}
+
+			.light-mode .sidebar button {
+				background-color: #ddd;
+				color: #000;
+			}
+
+			.sidebar button:hover {
+				background-color: #444;
+			}
+
+			.light-mode .sidebar button:hover {
+				background-color: #ccc;
+			}
+
+			.editor-container {
+				flex-grow: 1;
+				display: flex;
+				flex-direction: column;
+				overflow: hidden;
+			}
+
+			h1 {
+				margin: 0;
+				padding: 15px 20px;
+				background-color: #0d0d0d;
+				color: #00cc99;
+				font-size: 1.5em;
+				text-align: center;
+				border-bottom: 1px solid #333;
+				transition: background-color 0.3s, color 0.3s;
+			}
+
+			.light-mode h1 {
+				background-color: #ffffff;
+				color: #000000;
+				border-bottom: 1px solid #ccc;
+			}
+
+			#codeInput {
+				flex-grow: 1;
+				padding: 15px;
+				font-family: 'Courier New', monospace;
+				font-size: 14px;
+				background-color: #2d2d2d;
+				color: #ffffff;
+				border: none;
+				resize: none;
+				outline: none;
+				caret-color: white;
+				white-space: pre;
+				overflow-wrap: normal;
+				overflow-x: auto;
+				overflow-y: auto;
+
+				/* WebKit 滚动条样式 */
+				::-webkit-scrollbar {
+					width: 8px;
+					height: 8px;
+				}
+
+				::-webkit-scrollbar-track {
+					background: transparent;
+				}
+
+				::-webkit-scrollbar-thumb {
+					background-color: rgba(255, 255, 255, 0.2);
+					border-radius: 4px;
+				}
+
+				::-webkit-scrollbar-thumb:hover {
+					background-color: rgba(255, 255, 255, 0.3);
+				}
+
+				/* Firefox 滚动条 */
+				scrollbar-width: thin;
+				scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+
+				transition: background-color 0.3s,
+				color 0.3s;
+			}
+
+			/* --- LIGHT MODE: 修复代码编辑器颜色与滚动条 --- */
+			.light-mode #codeInput {
+				background-color: #fafafa;
+				color: #000000;
+				caret-color: black;
+			}
+
+			.light-mode #codeInput::-webkit-scrollbar {
+				width: 8px;
+				height: 8px;
+			}
+
+			.light-mode #codeInput::-webkit-scrollbar-track {
+				background: transparent;
+			}
+
+			.light-mode #codeInput::-webkit-scrollbar-thumb {
+				background-color: rgba(0, 0, 0, 0.2);
+			}
+
+			.light-mode #codeInput::-webkit-scrollbar-thumb:hover {
+				background-color: rgba(0, 0, 0, 0.3);
+			}
+
+			.light-mode #codeInput {
+				scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+			}
+
+			/* --- 自定义弹窗样式 --- */
+			.modal {
+				display: none;
+				position: fixed;
+				z-index: 1000;
+				left: 0;
+				top: 0;
+				width: 100%;
+				height: 100%;
+				background-color: rgba(0, 0, 0, 0.7);
+			}
+
+			.modal-content {
+				background-color: #2d2d2d;
+				margin: 15% auto;
+				padding: 20px;
+				border-radius: 10px;
+				width: 300px;
+				max-height: 80vh;
+				overflow-y: auto;
+				box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+				transition: background-color 0.3s, color 0.3s;
+			}
+
+			.light-mode .modal-content {
+				background-color: #ffffff;
+				color: #000;
+			}
+
+			.modal-header {
+				font-size: 1.2em;
+				margin-bottom: 15px;
+				color: #00cc99;
+				transition: color 0.3s;
+			}
+
+			.light-mode .modal-header {
+				color: #000;
+			}
+
+			.modal-body {
+				max-height: 200px;
+				overflow-y: auto;
+			}
+
+			.modal-body div {
+				padding: 10px;
+				cursor: pointer;
+				border-radius: 5px;
+				transition: background-color 0.3s;
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+			}
+
+			.modal-body div:hover {
+				background-color: #333;
+			}
+
+			.light-mode .modal-body div:hover {
+				background-color: #ddd;
+			}
+
+			.startup-checkbox {
+				margin-left: 10px;
+				width: 16px;
+				height: 16px;
+				cursor: pointer;
+			}
+
+			.modal-input {
+				width: 100%;
+				max-width: calc(100% - 20px);
+				padding: 10px;
+				margin: 0 auto 10px auto;
+				border: none;
+				border-radius: 5px;
+				background-color: #333;
+				color: #fff;
+				transition: background-color 0.3s, color 0.3s;
+				box-sizing: border-box;
+			}
+
+			.light-mode .modal-input {
+				background-color: #fafafa;
+				color: #000;
+			}
+
+			.modal-button {
+				background-color: #00cc99;
+				color: #fff;
+				border: none;
+				padding: 10px 15px;
+				border-radius: 5px;
+				cursor: pointer;
+				transition: background-color 0.3s;
+			}
+
+			.modal-button:hover {
+				background-color: #00b386;
+			}
+
+			.modal-cancel {
+				background-color: #ff6b6b;
+				margin-left: 10px;
+			}
+
+			.modal-cancel:hover {
+				background-color: #ff4d4d;
+			}
+
+			/* --- 提示消息样式 --- */
+			.toast {
+				display: none;
+				position: fixed;
+				bottom: 20px;
+				right: 20px;
+				background-color: #2d2d2d;
+				color: #fff;
+				padding: 15px 20px;
+				border-radius: 5px;
+				box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+				z-index: 1001;
+				transition: background-color 0.3s, color 0.3s;
+			}
+
+			.light-mode .toast {
+				background-color: #ffffff;
+				color: #000;
+			}
+		</style>
+
+	</head>
+	<body>
+		<div class="container">
+			<div class="sidebar neumorphism">
+				<h2>操作</h2>
+				<button id="toggleTheme">切换主题</button>
+				<button id="saveCode">保存代码</button>
+				<button id="loadCode">加载代码</button>
+				<button id="deleteCode">删除代码</button>
+				<button id="setStartup">设置启动项</button>
+				<button id="importCode">导入代码</button>
+				<button id="exportCode">导出全部代码</button>
+			</div>
+			<div class="editor-container">
+				<h1>JavaScript 编辑器</h1>
+				<textarea id="codeInput" autofocus></textarea>
+			</div>
+		</div>
+
+		<!-- 自定义弹窗 -->
+		<div id="modal" class="modal">
+			<div class="modal-content">
+				<div class="modal-header" id="modalHeader">选择代码</div>
+				<div class="modal-body" id="modalBody"></div>
+				<input type="text" id="modalInput" class="modal-input" placeholder="输入代码名称" style="display: none;" />
+				<div style="display: flex; justify-content: space-between;">
+					<button id="modalConfirm" class="modal-button">确认</button>
+					<button id="modalCancel" class="modal-button modal-cancel">取消</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- 提示消息 -->
+		<div id="toast" class="toast"></div>
+
+		<!-- 第三方库 -->
+		<script src="https://cdn.jsdelivr.net/npm/prettier@2.7.1/standalone.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/prettier@2.7.1/parser-babel.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+
+		<script>
+			let isLightMode = false;
+			let currentEditingName = null; // 当前正在编辑的代码名称（用于保存时默认填充）
+
+			// Tab 键缩进 + 快捷键支持
+			document.getElementById('codeInput').addEventListener('keydown', function(e) {
+				// Tab 缩进
+				if (e.key === 'Tab') {
+					e.preventDefault();
+					const start = this.selectionStart;
+					const end = this.selectionEnd;
+					this.value = this.value.substring(0, start) + '    ' + this.value.substring(end);
+					this.selectionStart = this.selectionEnd = start + 4;
+				}
+
+				// Ctrl+Enter 或 Cmd+Enter 运行代码
+				if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+					e.preventDefault();
+					runCode();
+				}
+
+				// Ctrl+K 或 Cmd+K 格式化代码
+				if (e.key === 'k' && (e.ctrlKey || e.metaKey)) {
+					e.preventDefault();
+					formatCode();
+				}
+
+				// Ctrl+S 或 Cmd+S 弹出保存弹窗
+				if (e.key === 's' && (e.ctrlKey || e.metaKey)) {
+					e.preventDefault();
+					showSaveModal();
+				}
+			});
+
+			// 切换主题
+			document.getElementById('toggleTheme').addEventListener('click', () => {
+				isLightMode = !isLightMode;
+				document.body.classList.toggle('light-mode', isLightMode);
+			});
+
+			// 格式化代码
+			function formatCode() {
+				const code = document.getElementById('codeInput').value;
+				try {
+					const formatted = prettier.format(code, { parser: 'babel', plugins: [prettierPlugins.babel] });
+					document.getElementById('codeInput').value = formatted;
+				} catch (error) {
+					console.error('格式化失败：' + error.message);
+				}
+			}
+
+			// 运行代码
+			function runCode() {
+				const code = document.getElementById('codeInput').value;
+				if (!code.trim()) return;
+				try {
+					eval(code);
+				} catch (error) {
+					console.error('❌ 错误：' + error.message);
+				}
+			}
+
+			// 显示弹窗（通用）
+			function showModal(mode, headerText, bodyContent, onConfirm, defaultValue = '') {
+				const selectedItems = new Set();
+				const modal = document.getElementById('modal');
+				const modalHeader = document.getElementById('modalHeader');
+				const modalBody = document.getElementById('modalBody');
+				const modalInput = document.getElementById('modalInput');
+				const modalConfirm = document.getElementById('modalConfirm');
+				const modalCancel = document.getElementById('modalCancel');
+
+				modalHeader.textContent = headerText;
+				modalBody.innerHTML = '';
+				modalInput.style.display = mode === 'save' ? 'block' : 'none';
+				modalInput.value = defaultValue || ''; // 填入默认值（如当前编辑名称）
+
+				if (mode === 'load' || mode === 'delete') {
+					bodyContent.forEach((item) => {
+						const div = document.createElement('div');
+						div.textContent = item;
+						div.addEventListener('click', () => {
+							Array.from(modalBody.children).forEach((child) => child.style.backgroundColor = '');
+							div.style.backgroundColor = isLightMode ? '#ddd' : '#333';
+							selectedItems.clear();
+							selectedItems.add(item);
+						});
+						modalBody.appendChild(div);
+					});
+				} else if (mode === 'startup') {
+					const currentStartupList = JSON.parse(localStorage.getItem('startupCodes') || '[]');
+					currentStartupList.forEach(item => selectedItems.add(item));
+
+					bodyContent.forEach((item) => {
+						const div = document.createElement('div');
+						const nameSpan = document.createElement('span');
+						nameSpan.textContent = item;
+
+						const checkbox = document.createElement('input');
+						checkbox.type = 'checkbox';
+						checkbox.className = 'startup-checkbox';
+						checkbox.checked = selectedItems.has(item);
+
+						checkbox.addEventListener('change', () => {
+							if (checkbox.checked) {
+								selectedItems.add(item);
+							} else {
+								selectedItems.delete(item);
+							}
+						});
+
+						div.appendChild(nameSpan);
+						div.appendChild(checkbox);
+
+						div.addEventListener('click', (e) => {
+							if (e.target !== checkbox) {
+								checkbox.checked = !checkbox.checked;
+								if (checkbox.checked) {
+									selectedItems.add(item);
+								} else {
+									selectedItems.delete(item);
+								}
+							}
+						});
+
+						modalBody.appendChild(div);
+					});
+				}
+
+				modalConfirm.onclick = () => {
+					if (mode === 'save') {
+						const name = modalInput.value.trim();
+						if (!name) return showToast('请输入代码名称！');
+						onConfirm(name);
+					} else if (mode === 'startup') {
+						onConfirm(Array.from(selectedItems));
+					} else {
+						const selectedItem = Array.from(selectedItems)[0] || '';
+						if (!selectedItem) return showToast('请选择一项！');
+						onConfirm(selectedItem);
+					}
+					hideModal();
+				};
+
+				modalCancel.onclick = hideModal;
+				modal.style.display = 'block';
+			}
+
+			// 隐藏弹窗
+			function hideModal() {
+				document.getElementById('modal').style.display = 'none';
+			}
+
+			// 显示保存弹窗（支持默认填充名称）
+			function showSaveModal() {
+				showModal('save', '保存代码', [], (name) => {
+					const code = document.getElementById('codeInput').value;
+					if (!code.trim()) {
+						return showToast('无法保存空代码！');
+					}
+					const savedCodes = JSON.parse(localStorage.getItem('savedCodes') || '{}');
+					savedCodes[name] = code;
+					localStorage.setItem('savedCodes', JSON.stringify(savedCodes));
+					currentEditingName = name; // 更新当前编辑名称
+					showToast('✅ 代码已保存为：' + name);
+				}, currentEditingName); // ← 自动填充当前正在编辑的名称
+			}
+
+			// 绑定保存按钮
+			document.getElementById('saveCode').addEventListener('click', showSaveModal);
+
+			// 加载代码
+			document.getElementById('loadCode').addEventListener('click', () => {
+				const savedCodes = JSON.parse(localStorage.getItem('savedCodes') || '{}');
+				const names = Object.keys(savedCodes);
+				if (names.length === 0) {
+					showToast('没有保存的代码！');
+					return;
+				}
+				showModal('load', '加载代码', names, (name) => {
+					if (name && savedCodes[name]) {
+						document.getElementById('codeInput').value = savedCodes[name];
+						currentEditingName = name; // 设置当前编辑的代码名
+						showToast('代码已加载！');
+					}
+				});
+			});
+
+			// 删除代码
+			document.getElementById('deleteCode').addEventListener('click', () => {
+				const savedCodes = JSON.parse(localStorage.getItem('savedCodes') || '{}');
+				const names = Object.keys(savedCodes);
+				if (names.length === 0) {
+					showToast('没有保存的代码！');
+					return;
+				}
+				showModal('delete', '删除代码', names, (name) => {
+					delete savedCodes[name];
+					localStorage.setItem('savedCodes', JSON.stringify(savedCodes));
+					if (currentEditingName === name) {
+						currentEditingName = null; // 清除当前编辑名
+					}
+					showToast('代码已删除！');
+				});
+			});
+
+			// 设置启动项（多选）
+			document.getElementById('setStartup').addEventListener('click', () => {
+				const savedCodes = JSON.parse(localStorage.getItem('savedCodes') || '{}');
+				const names = Object.keys(savedCodes);
+				if (names.length === 0) {
+					showToast('没有保存的代码！');
+					return;
+				}
+				showModal('startup', '设置启动项（可多选）', names, (selectedNames) => {
+					localStorage.setItem('startupCodes', JSON.stringify(selectedNames));
+					if (selectedNames.length > 0) {
+						showToast(`${selectedNames.length} 个代码已设为启动项！`);
+					} else {
+						showToast('启动项已清空！');
+					}
+				});
+			});
+
+			// 导入代码
+			document.getElementById('importCode').addEventListener('click', () => {
+				const input = document.createElement('input');
+				input.type = 'file';
+				input.accept = '.js,.zip';
+				input.multiple = false;
+
+				input.onchange = async (e) => {
+					const file = e.target.files[0];
+					if (!file) return;
+
+					try {
+						if (file.name.endsWith('.js')) {
+							const reader = new FileReader();
+							reader.onload = () => {
+								const code = reader.result;
+								let name = file.name.slice(0, -3); // 去掉 .js
+								// 如果存在同名文件，提示是否覆盖？
+								const savedCodes = JSON.parse(localStorage.getItem('savedCodes') || '{}');
+								if (savedCodes[name]) {
+									if (!confirm(`文件 "${name}" 已存在，是否覆盖？`)) {
+										name = prompt('请输入新名称：', name) || name + '_copy';
+									}
+								}
+								savedCodes[name] = code;
+								localStorage.setItem('savedCodes', JSON.stringify(savedCodes));
+								showToast(`✅ 已导入：${name}`);
+							};
+							reader.readAsText(file);
+						} else if (file.name.endsWith('.zip')) {
+							const zip = new JSZip();
+							const content = await zip.loadAsync(file);
+							const savedCodes = JSON.parse(localStorage.getItem('savedCodes') || '{}');
+							let importedCount = 0;
+
+							for (const [filename, zipEntry] of Object.entries(content.files)) {
+								if (filename.endsWith('/') || !filename.endsWith('.js')) continue;
+								let name = filename.slice(0, -3);
+								if (savedCodes[name]) {
+									if (!confirm(`文件 "${name}" 已存在，是否覆盖？`)) continue;
+								}
+								const code = await zipEntry.async('string');
+								savedCodes[name] = code;
+								importedCount++;
+							}
+
+							localStorage.setItem('savedCodes', JSON.stringify(savedCodes));
+							showToast(`✅ 已导入 ${importedCount} 个 .js 文件！`);
+						} else {
+							showToast('❌ 不支持的文件类型！');
+						}
+					} catch (err) {
+						console.error(err);
+						showToast('❌ 导入失败：' + err.message);
+					}
+				};
+
+				input.click();
+			});
+
+			// 导出代码
+			document.getElementById('exportCode').addEventListener('click', async () => {
+				const savedCodes = JSON.parse(localStorage.getItem('savedCodes') || '{}');
+				const names = Object.keys(savedCodes);
+				if (names.length === 0) {
+					showToast('没有可导出的代码！');
+					return;
+				}
+
+				const zip = new JSZip();
+				names.forEach(name => {
+					zip.file(`${name}.js`, savedCodes[name]);
+				});
+
+				try {
+					const blob = await zip.generateAsync({ type: 'blob' });
+					const link = document.createElement('a');
+					link.href = URL.createObjectURL(blob);
+					link.download = 'javascript-editor-backup.zip';
+					link.click();
+					showToast(`✅ 已导出 ${names.length} 个代码文件！`);
+				} catch (err) {
+					showToast('❌ 导出失败：' + err.message);
+				}
+			});
+
+			// 显示提示消息
+			function showToast(message) {
+				const toast = document.getElementById('toast');
+				toast.textContent = message;
+				toast.style.display = 'block';
+				setTimeout(() => {
+					toast.style.display = 'none';
+				}, 3000);
+			}
+
+			// 监听 ESC 关闭弹窗
+			document.addEventListener('keydown', function(e) {
+				const modal = document.getElementById('modal');
+				if (e.key === 'Escape' && modal.style.display === 'block') {
+					hideModal();
+				}
+			});
+
+			// 自动聚焦并执行启动项
+			window.onload = () => {
+				const codeInput = document.getElementById('codeInput');
+				codeInput.focus();
+
+				// 执行启动项（静默）
+				const startupList = JSON.parse(localStorage.getItem('startupCodes') || '[]');
+				if (startupList.length > 0) {
+					const savedCodes = JSON.parse(localStorage.getItem('savedCodes') || '{}');
+					startupList.forEach(name => {
+						const code = savedCodes[name];
+						if (code) {
+							try {
+								eval(code);
+							} catch (error) {
+								console.error(`❌ 启动项执行失败 [${name}]：`, error.message);
+							}
+						}
+					});
+				}
+			};
+		</script>
+	</body>
+</html>
