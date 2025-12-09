@@ -956,6 +956,13 @@
 					}
 				});
 			});
+			//一键挂在函数到windows 目前暂不使用
+			for (let key in self) {
+				if (typeof self[key] === 'function' && !window[key]) {
+					window[key] = self[key];
+					console.log(`✅ 自动暴露函数: ${key}`);
+				}
+			}
 		</script>
 	</body>
 </html>
