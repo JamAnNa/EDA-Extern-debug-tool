@@ -30,24 +30,43 @@
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
         }
 
-        /* 搜索框容器 - 紧贴标题栏下方，内部内容居中 */
+        /* 搜索框容器 */
         .search-container {
             position: sticky;
-            top: 60px; /* 标题栏高度约60px */
-            z-index: 15;
+            top: 60px; /* 标题栏高度 */
+            z-index: 18;
             background-color: #1e1e1e;
-            padding: 15px 0; /* 左右设为0，让内部元素控制居中 */
+            padding: 15px 0;
             border-bottom: 1px solid #333;
             display: flex;
-            justify-content: center; /* 关键：内容水平居中 */
+            justify-content: center;
             align-items: center;
         }
 
-        /* 搜索框样式 - 主编译器风格 + 居中控制 */
+        /* 批量操作栏 - 移动到搜索框下方 */
+        .batch-actions-bar {
+            position: sticky;
+            top: 100px; /* 60px header + 40px search */
+            z-index: 17;
+            background-color: #1e1e1e;
+            padding: 10px 20px;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .batch-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        /* 搜索框样式 */
         #searchInput {
             width: 100%;
-            max-width: 500px; /* 最大宽度限制 */
-            margin: 0 20px; /* 在移动端留点边距 */
+            max-width: 500px;
+            margin: 0 20px;
             padding: 10px 15px;
             background-color: #333;
             color: #fff;
@@ -64,17 +83,16 @@
             background-color: #444;
         }
 
-        /* 主内容区 - 隐藏滚动条 */
+        /* 主内容区 */
         .main-content {
-            height: calc(100vh - 110px); /* 60px header + 50px search */
+            height: calc(100vh - 150px); /* 60+40+50 */
             overflow-y: auto;
             padding: 0 20px 20px 20px;
-            /* 隐藏滚动条 */
-            scrollbar-width: none; /* Firefox */
+            scrollbar-width: none;
         }
 
         .main-content::-webkit-scrollbar {
-            display: none; /* Chrome/Safari */
+            display: none;
         }
 
         /* 文件列表 */
@@ -86,7 +104,6 @@
 
         .file-item {
             display: flex;
-            justify-content: space-between;
             align-items: center;
             padding: 15px;
             border-bottom: 1px solid #333;
@@ -98,13 +115,26 @@
             background-color: #3a3a3a;
         }
 
-        .file-name {
+        /* 复选框 */
+        .file-checkbox {
+            width: 20px;
+            height: 20px;
+            margin-right: 15px;
+            cursor: pointer;
+        }
+
+        .file-info {
             flex-grow: 1;
+            display: flex;
+            align-items: center;
+        }
+
+        .file-name {
             font-weight: bold;
             word-break: break-all;
         }
 
-        /* 按钮组 */
+        /* 按钮组 - 统一使用 .btn 样式 */
         .file-actions {
             display: flex;
             align-items: center;
@@ -126,9 +156,12 @@
             background-color: #444;
         }
 
-        .file-actions .btn:not(:first-child) {
+        .file-actions .btn {
             margin-left: 10px;
         }
+
+        /* 批量操作按钮 - 不再使用特殊颜色，统一用 .btn */
+        /* 删除之前的 .batch-btn 样式 */
 
         /* 加载提示 & 空状态 */
         #loading, .empty-tip {
@@ -224,12 +257,25 @@
     <!-- 固定顶部标题 -->
     <div class="header-bar">云文件列表</div>
 
-    <!-- 搜索框容器（内容居中） -->
+    <!-- 搜索框容器 -->
     <div class="search-container">
         <input type="text" id="searchInput" placeholder="输入文件名进行搜索..." autocomplete="off">
     </div>
 
-    <!-- 可滚动主内容区（隐藏滚动条） -->
+    <!-- 批量操作栏 - 放在搜索框下方 -->
+    <div class="batch-actions-bar">
+        <div class="batch-left">
+            <input type="checkbox" id="selectAll" title="全选/取消全选">
+            <label for="selectAll" style="cursor: pointer;">全选</label>
+            <button class="btn" id="batchDownload">批量下载</button>
+            <button class="btn" id="batchImport">批量导入</button>
+        </div>
+        <div>
+            已选中 <span id="selectedCount">0</span> 项
+        </div>
+    </div>
+
+    <!-- 可滚动主内容区 -->
     <div class="main-content">
         <div id="loading">正在加载文件列表...</div>
         <div class="file-list" id="fileList"></div>
@@ -313,10 +359,10 @@
                     request.onsuccess = resolve;
                     request.onerror = reject;
                 });
-                showMessage('成功', `✅ 代码 "${name}" 已导入`);
+                return true;
             } catch (error) {
                 console.error('保存代码失败:', error);
-                showMessage('错误', '❌ 导入失败');
+                return false;
             }
         }
 
@@ -334,24 +380,30 @@
         }
 
         function showConfirm(message, onConfirm) {
-            const modal = document.getElementById('confirmModal');
-            document.getElementById('confirmMessage').textContent = message;
-            modal.style.display = 'flex';
+            return new Promise((resolve) => {
+                const modal = document.getElementById('confirmModal');
+                document.getElementById('confirmMessage').textContent = message;
+                modal.style.display = 'flex';
 
-            const cancelBtn = document.getElementById('confirmCancel');
-            const okBtn = document.getElementById('confirmOK');
+                const cancelBtn = document.getElementById('confirmCancel');
+                const okBtn = document.getElementById('confirmOK');
 
-            const cleanup = () => {
-                modal.style.display = 'none';
-                cancelBtn.onclick = null;
-                okBtn.onclick = null;
-            };
+                const cleanup = () => {
+                    modal.style.display = 'none';
+                    cancelBtn.onclick = null;
+                    okBtn.onclick = null;
+                };
 
-            cancelBtn.onclick = cleanup;
-            okBtn.onclick = () => {
-                cleanup();
-                onConfirm();
-            };
+                cancelBtn.onclick = () => {
+                    cleanup();
+                    resolve(false);
+                };
+
+                okBtn.onclick = () => {
+                    cleanup();
+                    resolve(true);
+                };
+            });
         }
 
         // ========== 搜索过滤功能 ==========
@@ -372,7 +424,6 @@
                 }
             });
 
-            // 移除旧的“未找到”提示
             document.querySelectorAll('.empty-tip.search-empty').forEach(el => el.remove());
 
             if (visibleCount === 0 && searchTerm) {
@@ -383,18 +434,120 @@
             }
         }
 
+        // ========== 批量操作逻辑 ==========
+
+        let selectedFiles = new Set();
+        const selectedCountEl = document.getElementById('selectedCount');
+        const selectAllCheckbox = document.getElementById('selectAll');
+        const batchDownloadBtn = document.getElementById('batchDownload');
+        const batchImportBtn = document.getElementById('batchImport');
+
+        function updateSelectedCount() {
+            selectedCountEl.textContent = selectedFiles.size;
+        }
+
+        function toggleSelectFile(fileKey, checked) {
+            if (checked) {
+                selectedFiles.add(fileKey);
+            } else {
+                selectedFiles.delete(fileKey);
+            }
+            updateSelectedCount();
+        }
+
+        selectAllCheckbox.addEventListener('change', function() {
+            const checkboxes = document.querySelectorAll('.file-checkbox');
+            checkboxes.forEach(cb => {
+                cb.checked = this.checked;
+                toggleSelectFile(cb.dataset.filekey, this.checked);
+            });
+        });
+
+        batchDownloadBtn.addEventListener('click', async () => {
+            if (selectedFiles.size === 0) {
+                showMessage('提示', '请至少选择一个文件');
+                return;
+            }
+
+            for (const fileKey of selectedFiles) {
+                const file = window.fileDataMap[fileKey];
+                if (!file) continue;
+
+                try {
+                    const res = await fetch(file.url);
+                    const blob = await res.blob();
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = file.filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    setTimeout(() => {
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(a.href);
+                    }, 100);
+                } catch (err) {
+                    console.error('下载失败:', file.filename, err);
+                }
+            }
+
+            showMessage('成功', `✅ 已开始下载 ${selectedFiles.size} 个文件`);
+        });
+
+        batchImportBtn.addEventListener('click', async () => {
+            if (selectedFiles.size === 0) {
+                showMessage('提示', '请至少选择一个文件');
+                return;
+            }
+
+            const localNames = await getAllCodeNamesFromDB();
+            let importedCount = 0;
+
+            for (const fileKey of selectedFiles) {
+                const file = window.fileDataMap[fileKey];
+                if (!file) continue;
+
+                const cleanName = file.filename.replace(/\.js$/, '');
+                let shouldImport = true;
+
+                if (localNames.includes(cleanName)) {
+                    const shouldOverwrite = await showConfirm(`文件 "${cleanName}.js" 已存在，是否覆盖？`);
+                    if (!shouldOverwrite) {
+                        shouldImport = false;
+                    }
+                }
+
+                if (shouldImport) {
+                    try {
+                        const res = await fetch(file.url);
+                        const cloudCode = await res.text();
+                        const success = await saveCodeToDB(cleanName, cloudCode);
+                        if (success) {
+                            importedCount++;
+                        }
+                    } catch (err) {
+                        console.error('导入失败:', file.filename, err);
+                    }
+                }
+            }
+
+            showMessage('完成', `✅ 成功导入 ${importedCount} 个文件`);
+            selectedFiles.clear();
+            updateSelectedCount();
+            document.querySelectorAll('.file-checkbox').forEach(cb => cb.checked = false);
+            selectAllCheckbox.checked = false;
+        });
+
         // ========== 页面逻辑 ==========
 
         const fileListContainer = document.getElementById('fileList');
         const loadingDiv = document.getElementById('loading');
         const searchInput = document.getElementById('searchInput');
+        window.fileDataMap = {}; // 存储文件数据，供批量操作使用
 
-        // 初始化搜索框事件
         searchInput.addEventListener('input', function() {
             filterFiles(this.value);
         });
 
-        // 支持 ESC 清空搜索框
         searchInput.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 this.value = '';
@@ -416,21 +569,40 @@
                     return;
                 }
 
-                const localNames = await getAllCodeNamesFromDB();
-
                 files.forEach(file => {
+                    const fileKey = file.filename; // 使用文件名作为唯一键
+                    window.fileDataMap[fileKey] = file;
+
                     const itemDiv = document.createElement('div');
                     itemDiv.className = 'file-item';
 
+                    // 复选框
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.className = 'file-checkbox';
+                    checkbox.dataset.filekey = fileKey;
+                    checkbox.addEventListener('change', function() {
+                        toggleSelectFile(fileKey, this.checked);
+                        // 如果不是全选状态下手动取消，则取消全选
+                        if (!this.checked && selectAllCheckbox.checked) {
+                            selectAllCheckbox.checked = false;
+                        }
+                    });
+
+                    // 文件信息
+                    const infoDiv = document.createElement('div');
+                    infoDiv.className = 'file-info';
+
                     const nameSpan = document.createElement('span');
                     nameSpan.className = 'file-name';
-                    const cleanName = file.filename.replace(/\.js$/, '');
                     nameSpan.textContent = file.filename;
 
+                    infoDiv.appendChild(nameSpan);
+
+                    // 操作按钮
                     const actionsDiv = document.createElement('div');
                     actionsDiv.className = 'file-actions';
 
-                    // 下载按钮
                     const downloadBtn = document.createElement('button');
                     downloadBtn.className = 'btn';
                     downloadBtn.textContent = '下载';
@@ -453,7 +625,6 @@
                             });
                     };
 
-                    // 导入按钮
                     const importBtn = document.createElement('button');
                     importBtn.className = 'btn';
                     importBtn.textContent = '导入';
@@ -461,16 +632,17 @@
                         try {
                             const res = await fetch(file.url);
                             const cloudCode = await res.text();
+                            const cleanName = file.filename.replace(/\.js$/, '');
 
+                            const localNames = await getAllCodeNamesFromDB();
                             if (localNames.includes(cleanName)) {
-                                showConfirm(
-                                    `文件 “${cleanName}.js” 已存在，是否覆盖？`,
-                                    async () => {
-                                        await saveCodeToDB(cleanName, cloudCode);
-                                    }
-                                );
-                            } else {
-                                await saveCodeToDB(cleanName, cloudCode);
+                                const shouldOverwrite = await showConfirm(`文件 “${cleanName}.js” 已存在，是否覆盖？`);
+                                if (!shouldOverwrite) return;
+                            }
+
+                            const success = await saveCodeToDB(cleanName, cloudCode);
+                            if (success) {
+                                showMessage('成功', `✅ 代码 "${cleanName}" 已导入`);
                             }
                         } catch (err) {
                             console.error(err);
@@ -481,7 +653,8 @@
                     actionsDiv.appendChild(downloadBtn);
                     actionsDiv.appendChild(importBtn);
 
-                    itemDiv.appendChild(nameSpan);
+                    itemDiv.appendChild(checkbox);
+                    itemDiv.appendChild(infoDiv);
                     itemDiv.appendChild(actionsDiv);
 
                     fileListContainer.appendChild(itemDiv);
