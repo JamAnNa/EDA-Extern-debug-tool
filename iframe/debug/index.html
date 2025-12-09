@@ -489,16 +489,36 @@
 			}
 
 			// 从 IndexedDB 删除代码
+			// 从 IndexedDB 删除代码，并清理启动项中的引用
 			async function deleteCodeFromDB(name) {
 				try {
+					// 1. 先删除主代码
 					const transaction = db.transaction(['CodeStore'], 'readwrite');
 					const store = transaction.objectStore('CodeStore');
+
 					await new Promise((resolve, reject) => {
 						const request = store.delete(name);
 						request.onsuccess = resolve;
 						request.onerror = reject;
 					});
-					showToast('代码已删除！');
+
+					showToast(`✅ 代码 "${name}" 已删除！`);
+
+					// 2. 获取当前启动项列表并过滤掉被删除的项
+					const startupList = await getStartupCodesFromDB();
+					const updatedStartupList = startupList.filter(item => item !== name);
+
+					if (startupList.length !== updatedStartupList.length) {
+						// 如果有变化，说明这个脚本是启动项之一，需要更新
+						await setStartupCodesToDB(updatedStartupList);
+						console.log(`📌 已从启动项中移除: ${name}`);
+					}
+
+					// 3. 更新当前编辑状态
+					if (currentEditingName === name) {
+						currentEditingName = null;
+					}
+
 				} catch (error) {
 					console.error('删除代码失败:', error);
 					showToast('❌ 删除代码失败');
