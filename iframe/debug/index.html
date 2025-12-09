@@ -622,6 +622,7 @@
 
 			// 格式化代码
 			function formatCode() {
+				fixEdaApiCasing();
 				const code = document.getElementById('codeInput').value;
 				try {
 					// 使用 prettier 格式化代码，并禁用自动换行
@@ -961,6 +962,35 @@
 					console.error('页面加载失败:', error);
 				}
 			};
+			
+			/**
+			 * 修复 eda.API 大小写问题
+			 * 将 eda.sys_filemanager → eda.sys_FileManager 等
+			 * 只处理大写字母开头的模块前缀（如 SYS_, SCH_ 等）
+			 */
+			function fixEdaApiCasing() {
+			  const editor = document.getElementById('codeInput');
+			  if (!editor) return; // 编辑器不存在则退出
+			
+			  // 保存光标位置
+			  const start = editor.selectionStart;
+			  const end = editor.selectionEnd;
+			
+			  // 执行替换：匹配 eda.xxx_ 开头且 XXX 全为大写的部分
+			  editor.value = editor.value.replace(
+			    /eda\.([A-Z]+_[A-Za-z0-9_]*)/g,
+			    (match, apiPart) => {
+			      // 如果已经是小写，则跳过
+			      if (apiPart === apiPart.toLowerCase()) {
+			        return match;
+			      }
+			      return `eda.${apiPart.toLowerCase()}`;
+			    }
+			  );
+			
+			  // 恢复光标位置（防止跳到开头）
+			  editor.setSelectionRange(start, end);
+			}
 
 			// 搜索功能
 			document.getElementById('searchInput').addEventListener('input', function() {
