@@ -976,7 +976,7 @@
 					}
 				});
 			});
-			//一键挂在函数到windows 目前暂不使用
+			//一键挂载函数到windows 目前暂不使用
 			for (let key in self) {
 				if (typeof self[key] === 'function' && !window[key]) {
 					window[key] = self[key];
