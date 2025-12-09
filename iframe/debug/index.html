@@ -962,34 +962,27 @@
 					console.error('页面加载失败:', error);
 				}
 			};
-			
-			/**
-			 * 修复 eda.API 大小写问题
-			 * 将 eda.sys_filemanager → eda.sys_FileManager 等
-			 * 只处理大写字母开头的模块前缀（如 SYS_, SCH_ 等）
-			 */
+
 			function fixEdaApiCasing() {
-			  const editor = document.getElementById('codeInput');
-			  if (!editor) return; // 编辑器不存在则退出
-			
-			  // 保存光标位置
-			  const start = editor.selectionStart;
-			  const end = editor.selectionEnd;
-			
-			  // 执行替换：匹配 eda.xxx_ 开头且 XXX 全为大写的部分
-			  editor.value = editor.value.replace(
-			    /eda\.([A-Z]+_[A-Za-z0-9_]*)/g,
-			    (match, apiPart) => {
-			      // 如果已经是小写，则跳过
-			      if (apiPart === apiPart.toLowerCase()) {
-			        return match;
-			      }
-			      return `eda.${apiPart.toLowerCase()}`;
-			    }
-			  );
-			
-			  // 恢复光标位置（防止跳到开头）
-			  editor.setSelectionRange(start, end);
+				const editor = document.getElementById('codeInput');
+				if (!editor) return;
+
+				// 保存光标位置
+				const start = editor.selectionStart;
+				const end = editor.selectionEnd;
+
+				// 匹配：eda. 后跟 多个大写字母 + 下划线 + 其余字符
+				// 分组1: AAA（要转小写）
+				// 分组2: _XXX（保持原样）
+				editor.value = editor.value.replace(
+					/eda\.([A-Z]+)(_+[A-Za-z0-9_]*)/g,
+					(match, prefix, rest) => {
+						return `eda.${prefix.toLowerCase()}${rest}`;
+					}
+				);
+
+				// 恢复光标位置
+				editor.setSelectionRange(start, end);
 			}
 
 			// 搜索功能
