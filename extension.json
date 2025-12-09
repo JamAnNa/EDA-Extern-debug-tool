@@ -3,7 +3,7 @@
 	"uuid": "bf5e3141e76c4e289bfe56540513a5fa",
 	"displayName": "DEBUG FOR SDK",
 	"description": "基于嘉立创PRO API SDK的定制SDK，增加了内置debug能力",
-	"version": "1.12.2",
+	"version": "1.12.3",
 	"publisher": "anan",
 	"engines": {
 		"eda": "^3.2.41"
@@ -26,8 +26,8 @@
 	"headerMenus": {
 		"home": [
 			{
-				"id": "API SDK",
-				"title": "API SDK",
+				"id": "API DEBUG",
+				"title": "API DEBUG",
 				"menuItems": [
 					{
 						"id": "Debug",
@@ -44,8 +44,8 @@
 		],
 		"sch": [
 			{
-				"id": "API SDK",
-				"title": "API SDK",
+				"id": "API DEBUG",
+				"title": "API DEBUG",
 				"menuItems": [
 					{
 						"id": "Debug",
@@ -62,8 +62,8 @@
 		],
 		"pcb": [
 			{
-				"id": "API SDK",
-				"title": "API SDK",
+				"id": "API DEBUG",
+				"title": "API DEBUG",
 				"menuItems": [
 					{
 						"id": "Debug",

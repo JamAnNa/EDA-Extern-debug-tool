@@ -592,10 +592,12 @@
 				}
 			});
 
-			// 切换主题
+			// 切换主题 + 记忆功能
 			document.getElementById('toggleTheme').addEventListener('click', () => {
 				isLightMode = !isLightMode;
 				document.body.classList.toggle('light-mode', isLightMode);
+				// 保存到 localStorage
+				localStorage.setItem('themeMode', isLightMode ? 'light' : 'dark');
 			});
 
 			// 格式化代码
@@ -788,11 +790,16 @@
 					await setStartupCodesToDB(selectedNames);
 				});
 			});
-			
-			document.getElementById('loadCodeForServer').addEventListener('click',async () =>{
-				await eda.sys_Message.showToastMessage("这个功能还没做",1);
+
+			document.getElementById('loadCodeForServer').addEventListener('click', async () => {
+				//await eda.sys_Message.showToastMessage("这个功能还没做",1);
+				if (isLightMode) {
+					await eda.sys_IFrame.openIFrame("/iframe/debug/tool/LoadCodeForServer-Light.html", 700, 500, "ServerCode");
+				} else {
+					await eda.sys_IFrame.openIFrame("/iframe/debug/tool/LoadCodeForServer-Night.html", 700, 500, "ServerCode");
+				}
 			})
-		   
+
 			// 导入代码
 			document.getElementById('importCode').addEventListener('click', () => {
 				const input = document.createElement('input');
@@ -899,13 +906,23 @@
 				}
 			});
 
-			// 页面加载时初始化数据库并执行启动项
+			// 页面加载时初始化数据库并执行启动项 + 恢复主题
 			window.onload = async () => {
 				try {
 					await initDB();
 
 					const codeInput = document.getElementById('codeInput');
 					codeInput.focus();
+
+					// 👇👇👇 新增：恢复用户上次选择的主题 👇👇👇
+					const savedTheme = localStorage.getItem('themeMode');
+					if (savedTheme === 'light') {
+						isLightMode = true;
+						document.body.classList.add('light-mode');
+					} else {
+						isLightMode = false;
+						document.body.classList.remove('light-mode');
+					}
 
 					const startupList = await getStartupCodesFromDB();
 					if (startupList.length > 0) {
