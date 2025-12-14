@@ -25,6 +25,18 @@
 <p><p/>
 <image src="images/Title.png" alt="logo" width="300" height="100"> <image src="images/Title.png" alt="logo" width="300" height="100">
 
+目前本工具支持
+
+<p><p/>
+P2P文件共享
+<p><p/>
+代码高亮，附加新代码到启动项
+<p><p/>
+一次运行多个demo，执行自动化测试流程
+<p><p/>
+联合调试(这个还没写)
+<p><p/>
+
 <p><p/>
 <h3>支持多文件加载<h3/>
 <image src="images/MoreCode.png"  width="500" height="200">
@@ -69,6 +81,8 @@
     ```
 
 5. 在 嘉立创EDA专业版 中安装生成在 `./build/dist/` 下的扩展包
+
+注意：由于内置了编辑器工具，所以第一次加载有三秒左右的延迟
 
 ## 开源许可
 

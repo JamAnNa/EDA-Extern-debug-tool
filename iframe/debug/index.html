@@ -985,7 +985,8 @@
 			}
 
 			document.getElementById('DebugTool').addEventListener('click', async function() {
-				await eda.sys_IFrame.openIFrame("/iframe/debug/tool/DebugTool.html", 300, 300, 'debugtool', { maximizeButton: true, minimizeButton: true });
+				eda.sys_Message.showToastMessage("这个还没写，下次一定",'info',2);
+				//await eda.sys_IFrame.openIFrame("/iframe/debug/tool/DebugTool.html", 300, 300, 'debugtool', { maximizeButton: true, minimizeButton: true });
 			})
 
 			// 搜索功能
