@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+	<head>
+		<meta charset="UTF-8" />
+		<title>云节点系统 - 使用指南</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<style>
+			body {
+				font-family: 'Courier New', monospace;
+				background-color: #1e1e1e;
+				color: #e0e0e0;
+				margin: 0;
+				padding: 0;
+				line-height: 1.6;
+			}
+
+			.container {
+				max-width: 800px;
+				margin: 40px auto;
+				padding: 0 20px;
+			}
+
+			header {
+				text-align: center;
+				margin-bottom: 40px;
+				padding-bottom: 20px;
+				border-bottom: 1px solid #333;
+			}
+
+			h1 {
+				color: #00cc99;
+				font-size: 2.2em;
+				margin-bottom: 10px;
+			}
+
+			.section {
+				margin-bottom: 30px;
+				background: #252525;
+				padding: 20px;
+				border-radius: 8px;
+				border-left: 4px solid #00cc99;
+			}
+
+			h2 {
+				color: #00cc99;
+				margin-top: 0;
+				font-size: 1.4em;
+			}
+
+			p,
+			ul {
+				margin: 12px 0;
+			}
+
+			code,
+			pre {
+				background: #333;
+				color: #ffcc66;
+				padding: 2px 6px;
+				border-radius: 4px;
+				font-family: 'Courier New', monospace;
+			}
+
+			pre {
+				padding: 12px;
+				overflow-x: auto;
+				white-space: pre-wrap;
+				word-break: break-all;
+			}
+
+			.btn-group {
+				display: flex;
+				gap: 15px;
+				justify-content: center;
+				margin-top: 30px;
+				flex-wrap: wrap;
+			}
+
+			.btn {
+				padding: 12px 24px;
+				font-family: 'Courier New', monospace;
+				font-size: 16px;
+				border: 1px solid #333;
+				border-radius: 6px;
+				cursor: pointer;
+				transition: background 0.2s;
+			}
+
+			.btn-close {
+				background: #000;
+				color: white;
+			}
+
+			.btn-become {
+				background: #ffffff;
+				color: black;
+				font-weight: bold;
+			}
+
+			.btn:hover {
+				opacity: 0.9;
+			}
+
+			footer {
+				text-align: center;
+				margin-top: 50px;
+				color: #777;
+				font-size: 0.9em;
+				padding-top: 20px;
+				border-top: 1px solid #333;
+			}
+
+			a {
+				color: #00ccff;
+				text-decoration: none;
+			}
+
+			a:hover {
+				text-decoration: underline;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<header>
+				<h1>🌐 云节点共享系统</h1>
+				<p>去中心化 · 开源协作 · 自由共享</p>
+			</header>
+
+			<div class="section">
+				<h2>💡 什么是"云节点"？</h2>
+				<p>
+					本系统允许任何人部署一个公开的 PHP 节点，用于托管和分享 JavaScript 文件。
+					所有节点组成一个分布式网络，用户可以从任意节点下载或导入代码。
+				</p>
+				<p>
+					你既可以 <strong>使用他人节点</strong>，也可以 <strong>成为节点提供者</strong>，共同构建开放生态。
+				</p>
+			</div>
+
+			<div class="section">
+				<h2>🚀 如何注册一个已有节点？</h2>
+				<p>在主界面顶部输入框中输入目标服务器的域名，例如：</p>
+				<pre>myserver.example.com</pre>
+				<p>系统将自动向 <code>https://myserver.example.com/registry.php</code> 发起注册请求，注册 <code>https://myserver.example.com/share.php</code> 为可用节点。</p>
+				<p>✅ 要求：该服务器必须已正确部署 <code>registry.php</code> 和 <code>share.php</code>。</p>
+			</div>
+
+			<div class="section">
+				<h2>🛠️ 如何成为节点（部署自己的节点）？</h2>
+				<p>只需两步：</p>
+				<ol>
+					<li>点击下方 <strong>"成为节点"</strong> 按钮，下载 <code>registry.php</code> 和 <code>share.php</code></li>
+					<li>将这两个文件上传到你的 Web 服务器（需支持 PHP）的同一目录下</li>
+				</ol>
+				<p>✅ 部署后，你的节点地址即为：<br><code>https://你的域名/share.php</code></p>
+				<p>其他用户即可通过注册你的域名来使用你的节点！</p>
+				<p>⚠️ 注意：确保服务器可公网访问，且 PHP 已启用（无需数据库）。</p>
+			</div>
+
+			<div class="section">
+				<h2>🌍 开源精神</h2>
+				<p>
+					本项目基于 <strong>自由、开放、共享</strong> 的理念构建。
+					我们相信：知识不应被垄断，工具应当为所有人服务。
+				</p>
+				<p>
+					你可以：
+				</p>
+				<ul>
+					<li>自由使用、修改、分发本系统</li>
+					<li>贡献新功能或修复问题（欢迎提交 PR）</li>
+					<li>搭建公共节点帮助他人</li>
+				</ul>
+				<p>
+					🤝 <strong>每一个节点，都是对开放网络的一份贡献。</strong>
+				</p>
+			</div>
+
+			<div class="btn-group">
+				<button class="btn btn-close" onclick="CloseWindows()">关闭</button>
+				<button class="btn btn-become" onclick="downloadNodeFiles()">成为节点（下载 PHP 文件）</button>
+			</div>
+
+			<footer>
+				<p>本项目开源免费 | 鼓励共建去中心化代码生态 | <a href="https://github.com/JamAnNa/EDA-Extern-debug-tool.git" target="_blank">GitHub</a></p>
+			</footer>
+		</div>
+
+
+		<script>
+			async function downloadNodeFiles() {
+				const a = await eda.sys_Window.open("https://github.com/JamAnNa/EDA-Extern-debug-tool/releases/tag/P2P%E5%85%B1%E4%BA%AB%E8%8A%82%E7%82%B9");
+			}
+			async function CloseWindows() {
+				const a = await eda.sys_IFrame.closeIFrame("README");
+			}
+		</script>
+	</body>
+</html>

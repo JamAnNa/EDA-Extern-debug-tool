@@ -1,9 +1,9 @@
 {
 	"name": "pro-debug-sdk",
-	"uuid": "bf5e3141e76c4e289bfe56540513a5fa",
-	"displayName": "DEBUG FOR SDK",
+	"uuid": "12db507c3815486f99522fa235ddda0c",
+	"displayName": "联合调试工具",
 	"description": "基于嘉立创PRO API SDK的定制SDK，增加了内置debug能力",
-	"version": "1.12.4",
+	"version": "1.12.5",
 	"publisher": "anan",
 	"engines": {
 		"eda": "^3.2.41"
@@ -14,7 +14,10 @@
 		"url": ""
 	},
 	"categories": "Other",
-	"keywords": ["SDK", "DEBUG"],
+	"keywords": [
+		"SDK",
+		"DEBUG"
+	],
 	"images": {
 		"logo": "./images/logo.png"
 	},

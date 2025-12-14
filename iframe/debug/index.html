@@ -4,6 +4,10 @@
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>JavaScript 编辑器</title>
+		<!-- 以下两个CSS如果希望在浏览器中进行调试，请去掉iframe前缀，浏览器不会自动识别 -->
+		<link rel="stylesheet" href="/iframe/debug/css/dracula.min.css">
+		<link rel="stylesheet" href="/iframe/debug/css/codemirror.min.css">
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/default.min.css">
 		<style>
 			body {
 				font-family: 'Courier New', monospace;
@@ -109,75 +113,18 @@
 				border-bottom: 1px solid #ccc;
 			}
 
-			#codeInput {
+			.CodeMirror {
 				flex-grow: 1;
-				padding: 15px;
+				height: 450px;
+				/* 给一个固定高度以解锁滚动 */
 				font-family: 'Courier New', monospace;
 				font-size: 14px;
-				background-color: #2d2d2d;
-				color: #ffffff;
-				border: none;
-				resize: none;
-				outline: none;
-				caret-color: white;
-				white-space: pre;
-				overflow-wrap: normal;
-				overflow-x: auto;
-				overflow-y: auto;
-
-				/* WebKit 滚动条样式 */
-				::-webkit-scrollbar {
-					width: 8px;
-					height: 8px;
-				}
-
-				::-webkit-scrollbar-track {
-					background: transparent;
-				}
-
-				::-webkit-scrollbar-thumb {
-					background-color: rgba(255, 255, 255, 0.2);
-					border-radius: 4px;
-				}
-
-				::-webkit-scrollbar-thumb:hover {
-					background-color: rgba(255, 255, 255, 0.3);
-				}
-
-				/* Firefox 滚动条 */
-				scrollbar-width: thin;
-				scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
-
-				transition: background-color 0.3s,
-				color 0.3s;
 			}
 
 			/* --- LIGHT MODE: 修复代码编辑器颜色与滚动条 --- */
-			.light-mode #codeInput {
+			.light-mode .CodeMirror {
 				background-color: #fafafa;
 				color: #000000;
-				caret-color: black;
-			}
-
-			.light-mode #codeInput::-webkit-scrollbar {
-				width: 8px;
-				height: 8px;
-			}
-
-			.light-mode #codeInput::-webkit-scrollbar-track {
-				background: transparent;
-			}
-
-			.light-mode #codeInput::-webkit-scrollbar-thumb {
-				background-color: rgba(0, 0, 0, 0.2);
-			}
-
-			.light-mode #codeInput::-webkit-scrollbar-thumb:hover {
-				background-color: rgba(0, 0, 0, 0.3);
-			}
-
-			.light-mode #codeInput {
-				scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
 			}
 
 			/* --- 自定义弹窗样式 --- */
@@ -265,8 +212,6 @@
 				display: none;
 				/* 隐藏滚动条（适用于 WebKit 浏览器，如 Chrome 和 Edge） */
 			}
-
-
 
 			.modal-header {
 				font-size: 1.2em;
@@ -393,10 +338,11 @@
 				<button id="setStartup">设置启动项</button>
 				<button id="importCode">导入代码</button>
 				<button id="exportCode">导出全部代码</button>
+				<button id="DebugTool">联合调试</button>
 			</div>
 			<div class="editor-container">
 				<h1>JavaScript 编辑器</h1>
-				<textarea id="codeInput" autofocus></textarea>
+				<div id="codeEditor" style="height: 100%;"></div>
 			</div>
 		</div>
 
@@ -418,16 +364,95 @@
 
 		<!-- 提示消息 -->
 		<div id="toast" class="toast"></div>
-
-		<!-- 第三方库 -->
+		<!-- mirror核心库，这个需要先加载 -->
+		<script src="/iframe/debug/js/codemirror.min.js"></script>
+		<!-- 语言模式 -->
+		<script src="/iframe/debug/js/javascript.min.js"></script>
+		<!-- 自动补全插件，以下两个插件必须在上面的核心库加载结束之后才能加载，否则报错 -->
+		<script src="/iframe/debug/js/javascript-hint.min.js"></script>
+		<script src="/iframe/debug/js/show-hint.min.js"></script>
+		<!-- 代码格式化，自动补全括号，注册快捷键等乱七八糟的库 -->
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/edit/closebrackets.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/edit/matchbrackets.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/comment/comment.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/keymap/sublime.min.js"></script>
 		<script src="https://cdn.jsdelivr.net/npm/prettier@2.7.1/standalone.js"></script>
 		<script src="https://cdn.jsdelivr.net/npm/prettier@2.7.1/parser-babel.js"></script>
-		<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+		<!-- 压缩库，用来导出本地代码为压缩包 -->
+		<script src="/iframe/debug/js/jszip.min.js"></script>
+
 
 		<script>
 			let isLightMode = false;
 			let currentEditingName = null; // 当前正在编辑的代码名称
 			let db;
+			let editor;
+
+			// 初始化 CodeMirror 编辑器
+			function initCodeMirror() {
+				if (typeof CodeMirror.hint?.javascript === 'undefined') {
+					console.error('❌ CodeMirror JavaScript hint plugin not available!');
+					return;
+				}
+				editor = CodeMirror(document.getElementById('codeEditor'), {
+					value: '',
+					mode: 'javascript',
+					theme: 'dracula',
+					lineNumbers: true,
+					matchBrackets: true,
+					autoCloseBrackets: true,
+					indentUnit: 4,
+					tabSize: 4,
+					indentWithTabs: true,
+					extraKeys: {
+						"Ctrl-Space": "autocomplete",
+						"Ctrl-/": "toggleComment",
+						"Cmd-/": "toggleComment",
+						"Ctrl-Enter": function(cm) {
+							runCode();
+						},
+						"Cmd-Enter": function(cm) {
+							runCode();
+						},
+						"Ctrl-K": function(cm) {
+							formatCode();
+						},
+						"Cmd-K": function(cm) {
+							formatCode();
+						},
+						"Ctrl-S": function(cm) {
+							showSaveModal();
+						},
+						"Cmd-S": function(cm) {
+							showSaveModal();
+						},
+						"Tab": function(cm) {
+							if (cm.somethingSelected()) {
+								cm.indentSelection("add");
+							} else {
+								cm.replaceSelection("    ", "end");
+							}
+						}
+					},
+					hint: CodeMirror.hint.javascript,
+					hintOptions: {
+						completeSingle: false,
+						closeOnUnfocus: true,
+						highlight: true,
+						align: "left"
+					}
+				});
+				updateEditorTheme();
+			}
+
+			// 更新编辑器主题
+			function updateEditorTheme() {
+				if (isLightMode) {
+					editor.setOption('theme', 'default');
+				} else {
+					editor.setOption('theme', 'dracula');
+				}
+			}
 
 			// 初始化 IndexedDB 数据库
 			function initDB() {
@@ -582,40 +607,12 @@
 			}
 
 
-			// Tab 键缩进 + 快捷键支持
-			document.getElementById('codeInput').addEventListener('keydown', function(e) {
-				// Tab 缩进
-				if (e.key === 'Tab') {
-					e.preventDefault();
-					const start = this.selectionStart;
-					const end = this.selectionEnd;
-					this.value = this.value.substring(0, start) + '    ' + this.value.substring(end);
-					this.selectionStart = this.selectionEnd = start + 4;
-				}
-
-				// Ctrl+Enter 或 Cmd+Enter 运行代码
-				if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-					e.preventDefault();
-					runCode();
-				}
-
-				// Ctrl+K 或 Cmd+K 格式化代码
-				if (e.key === 'k' && (e.ctrlKey || e.metaKey)) {
-					e.preventDefault();
-					formatCode();
-				}
-
-				// Ctrl+S 或 Cmd+S 弹出保存弹窗
-				if (e.key === 's' && (e.ctrlKey || e.metaKey)) {
-					e.preventDefault();
-					showSaveModal();
-				}
-			});
-
 			// 切换主题 + 记忆功能
 			document.getElementById('toggleTheme').addEventListener('click', () => {
 				isLightMode = !isLightMode;
 				document.body.classList.toggle('light-mode', isLightMode);
+				// 更新编辑器主题
+				updateEditorTheme();
 				// 保存到 localStorage
 				localStorage.setItem('themeMode', isLightMode ? 'light' : 'dark');
 			});
@@ -623,7 +620,7 @@
 			// 格式化代码
 			function formatCode() {
 				fixEdaApiCasing();
-				const code = document.getElementById('codeInput').value;
+				const code = editor.getValue();
 				try {
 					// 使用 prettier 格式化代码，并禁用自动换行
 					const formatted = prettier.format(code, {
@@ -631,7 +628,7 @@
 						plugins: [prettierPlugins.babel],
 						printWidth: Infinity, // 禁用自动换行
 					});
-					document.getElementById('codeInput').value = formatted;
+					editor.setValue(formatted);
 				} catch (error) {
 					console.error('格式化失败：' + error.message);
 					showToast('❌ 格式化代码失败');
@@ -640,7 +637,7 @@
 
 			// 运行代码
 			function runCode() {
-				const code = document.getElementById('codeInput').value;
+				const code = editor.getValue();
 				if (!code.trim()) return;
 				try {
 					eval(code);
@@ -756,7 +753,7 @@
 			async function showSaveModal() {
 				const savedCodes = await getAllCodeNamesFromDB();
 				showModal('save', '保存代码', savedCodes, async (name) => {
-					const code = document.getElementById('codeInput').value;
+					const code = editor.getValue();
 					if (!code.trim()) {
 						return showToast('无法保存空代码！');
 					}
@@ -777,7 +774,7 @@
 				showModal('load', '加载代码', savedCodes, async (name) => {
 					const code = await loadCodeFromDB(name);
 					if (code) {
-						document.getElementById('codeInput').value = code;
+						editor.setValue(code);
 						currentEditingName = name;
 						showToast('代码已加载！');
 					}
@@ -931,11 +928,8 @@
 			window.onload = async () => {
 				try {
 					await initDB();
+					initCodeMirror();
 
-					const codeInput = document.getElementById('codeInput');
-					codeInput.focus();
-
-					// 👇👇👇 新增：恢复用户上次选择的主题 👇👇👇
 					const savedTheme = localStorage.getItem('themeMode');
 					if (savedTheme === 'light') {
 						isLightMode = true;
@@ -944,6 +938,9 @@
 						isLightMode = false;
 						document.body.classList.remove('light-mode');
 					}
+
+					// 更新编辑器主题
+					updateEditorTheme();
 
 					const startupList = await getStartupCodesFromDB();
 					if (startupList.length > 0) {
@@ -964,26 +961,32 @@
 			};
 
 			function fixEdaApiCasing() {
-				const editor = document.getElementById('codeInput');
-				if (!editor) return;
-
-				// 保存光标位置
-				const start = editor.selectionStart;
-				const end = editor.selectionEnd;
+				// 获取当前编辑器内容
+				const code = editor.getValue();
+				const start = editor.getCursor("start");
+				const end = editor.getCursor("end");
 
 				// 匹配：eda. 后跟 多个大写字母 + 下划线 + 其余字符
 				// 分组1: AAA（要转小写）
 				// 分组2: _XXX（保持原样）
-				editor.value = editor.value.replace(
+				const updatedCode = code.replace(
 					/eda\.([A-Z]+)(_+[A-Za-z0-9_]*)/g,
 					(match, prefix, rest) => {
 						return `eda.${prefix.toLowerCase()}${rest}`;
 					}
 				);
 
-				// 恢复光标位置
-				editor.setSelectionRange(start, end);
+				// 如果代码发生了变化，则更新编辑器内容
+				if (updatedCode !== code) {
+					editor.setValue(updatedCode);
+					// 恢复光标位置
+					editor.setCursor(start);
+				}
 			}
+
+			document.getElementById('DebugTool').addEventListener('click', async function() {
+				await eda.sys_IFrame.openIFrame("/iframe/debug/tool/DebugTool.html", 300, 300, 'debugtool', { maximizeButton: true, minimizeButton: true });
+			})
 
 			// 搜索功能
 			document.getElementById('searchInput').addEventListener('input', function() {
@@ -1008,4 +1011,3 @@
 			}
 		</script>
 	</body>
-</html>
