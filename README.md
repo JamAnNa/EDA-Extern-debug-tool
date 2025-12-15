@@ -1,91 +1,66 @@
-[简体中文](#)
+明白了！以下是**纯文本格式**的内容，不包含任何 Markdown 语法标签（如 `#`、`**`、``` 等），仅保留原始语义和结构，适合直接嵌入会自动解析 Markdown 的网页系统中：
 
-# debug-for-sdk
+---
 
-<p><p/>
-<h1>基于嘉立创EDA专业版开发工具构建的新版EDA调试专用开发工具</h1>
-<p><p/>
-<a href="https://github.com/JamAnNa/EDA-Extern-debug-tool" target="_blank">
-  <img src="https://img.shields.io/github/stars/JamAnNa/EDA-Extern-debug-tool?style=flat&logo=github" alt="GitHub Repo Stars" />
-</a>
-&nbsp;
-<a href="https://github.com/JamAnNa/EDA-Extern-debug-tool/issues" target="_blank">
-  <img src="https://img.shields.io/github/issues/JamAnNa/EDA-Extern-debug-tool?style=flat" alt="GitHub Issues" />
-</a>
-&nbsp;
-<a href="https://github.com/JamAnNa/EDA-Extern-debug-tool" target="_blank">
-  <img src="https://img.shields.io/github/repo-size/JamAnNa/EDA-Extern-debug-tool?style=flat" alt="GitHub Repo Size" />
-</a>
-&nbsp;
-<a href="https://choosealicense.com/licenses/apache-2.0/" target="_blank">
-  <img src="https://img.shields.io/github/license/JamAnNa/EDA-Extern-debug-tool?style=flat" alt="GitHub License" />
-</a>
+debug-for-sdk
 
-<h2>我们的目标是</h>
-<p><p/>
-<image src="images/Title.png" alt="logo" width="300" height="100"> <image src="images/Title.png" alt="logo" width="300" height="100">
+基于嘉立创EDA专业版开发工具构建的新版EDA调试专用开发工具
+
+[![GitHub Repo Stars](https://img.shields.io/github/stars/JamAnNa/EDA-Extern-debug-tool?style=flat&logo=github)](https://github.com/JamAnNa/EDA-Extern-debug-tool)  
+[![GitHub Issues](https://img.shields.io/github/issues/JamAnNa/EDA-Extern-debug-tool?style=flat)](https://github.com/JamAnNa/EDA-Extern-debug-tool/issues)  
+[![GitHub Repo Size](https://img.shields.io/github/repo-size/JamAnNa/EDA-Extern-debug-tool?style=flat)](https://github.com/JamAnNa/EDA-Extern-debug-tool)  
+[![GitHub License](https://img.shields.io/github/license/JamAnNa/EDA-Extern-debug-tool?style=flat)](https://choosealicense.com/licenses/apache-2.0/)
+
+我们的目标是
+
+![logo](images/Title.png) ![logo](images/Title.png)
 
 目前本工具支持
 
-<p><p/>
 P2P文件共享
-<p><p/>
+
 代码高亮，附加新代码到启动项
-<p><p/>
+
 一次运行多个demo，执行自动化测试流程
-<p><p/>
+
 联合调试(这个还没写)
-<p><p/>
 
-<p><p/>
-<h3>支持多文件加载<h3/>
-<image src="images/MoreCode.png"  width="500" height="200">
-<h3>支持从云端拉取代码<h3/>
-<image src="images/ServerCode.png" width="500" height="200">
-<p><p/>
+支持多文件加载  
+![多文件加载](images/MoreCode.png)
 
-> 详细开发文档请访问：[https://prodocs.lceda.cn/cn/api/guide/](https://prodocs.lceda.cn/cn/api/guide/)
+支持从云端拉取代码  
+![云端拉取代码](images/ServerCode.png)
 
-## 进入开发
+详细开发文档请访问：[https://prodocs.lceda.cn/cn/api/guide/](https://prodocs.lceda.cn/cn/api/guide/)
 
-本开发工具组包含了用于开发 [嘉立创EDA专业版](https://pro.lceda.cn/) 扩展包的所有环境和工具，并内置了 Prettier 和 ESLint 的推荐规则。
+进入开发
+
+本开发工具组包含了用于开发 嘉立创EDA专业版 (https://pro.lceda.cn/) 扩展包的所有环境和工具，并内置了 Prettier 和 ESLint 的推荐规则。  
 除此之外，内置了一个专业的debug工具，用于插件部分代码的快速测试
 
-1. 克隆 [eda-debug-tool](https://github.com/JamAnNa/EDA-Extern-debug-tool) 项目仓库到本地
+1. 克隆 eda-debug-tool 项目仓库到本地
 
-    Gitee:
+   GitHub:
 
-    ```shell
-    git clone --depth=1 国内暂无仓库
-    ```
-
-    GitHub:
-
-    ```shell
-    git clone --depth=1 https://github.com/JamAnNa/EDA-Extern-debug-tool
-    ```
+   git clone --depth=1 https://github.com/JamAnNa/EDA-Extern-debug-tool
 
 2. 初始化开发环境（安装依赖）
 
-    ```shell
-    npm install
-    ```
+   npm install
 
-3. 进行些许变更 ...
-   在iframe中编辑你的页面和代码，然后在src/index.ts中调用eda.sys_IFrame.openIFrame("iframe/dev/index.html")以查看你的页面
+3. 进行些许变更 ...  
+   在iframe中编辑你的页面和代码，然后在src/index.ts中调用 eda.sys_IFrame.openIFrame("iframe/dev/index.html") 以查看你的页面
 
 4. 编译扩展包
 
-    ```shell
-    npm run build
-    ```
+   npm run build
 
-5. 在 嘉立创EDA专业版 中安装生成在 `./build/dist/` 下的扩展包
+5. 在 嘉立创EDA专业版 中安装生成在 ./build/dist/ 下的扩展包
 
 注意：由于内置了编辑器工具，所以第一次加载有三秒左右的延迟
 
-## 开源许可
+开源许可
 
-<a href="https://choosealicense.com/licenses/apache-2.0/" style="vertical-align: inherit;" target="_blank"><img src="https://img.shields.io/github/license/easyeda/pro-api-sdk" alt="GitHub License" class="not-medium-zoom-image" style="display: inline; vertical-align: inherit;" /></a>
+[![GitHub License](https://img.shields.io/github/license/easyeda/pro-api-sdk)](https://choosealicense.com/licenses/apache-2.0/)
 
-本开发工具组使用 [Apache License 2.0](https://choosealicense.com/licenses/apache-2.0/) 开源许可协议，你仅可以将 **嘉立创EDA**、**EasyEDA** 商标信息用于依托于本工具组开发的扩展包的 **功能描述部分** 和 **开源发布的标题部分**。
+本开发工具组使用 Apache License 2.0 开源许可协议，你仅可以将 嘉立创EDA、EasyEDA 商标信息用于依托于本工具组开发的扩展包的 功能描述部分 和 开源发布的标题部分。
