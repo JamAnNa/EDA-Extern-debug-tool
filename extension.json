@@ -1,7 +1,7 @@
 {
 	"name": "pro-debug-sdk",
 	"uuid": "12db507c3815486f99522fa235ddda0c",
-	"displayName": "联合调试工具",
+	"displayName": "EDA调试工具",
 	"description": "基于嘉立创PRO API SDK的定制SDK，增加了内置debug能力",
 	"version": "1.12.5",
 	"publisher": "anan",
